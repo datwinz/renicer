@@ -1,15 +1,14 @@
 package main
 
 import (
-	//"fmt"
-	"fmt"
-	"log"
-	"os/exec"
-	"strings"
+    "fmt"
+    "log"
+    "os/exec"
+    "strings"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/widget"
+    "fyne.io/fyne/v2"
+    "fyne.io/fyne/v2/app"
+    "fyne.io/fyne/v2/widget"
 )    
 
 func main() {
@@ -17,45 +16,35 @@ func main() {
     //renicePath := processPaths("renice")
     proccessesSlice := findProcesses(psPath)
 
-    // This prints in cli how i want it too look in program
-    for i := 0; i < len(proccessesSlice)-1; i++ {
-        f := strings.Fields(proccessesSlice[i])
-        if strings.Contains(f[2], "/") {
-            s := strings.Split(f[2], "/")
-            pid := f[0]
-            ni := f[1]
-            comm := s[len(s)-1]
-            line := []string{pid, ni, comm}
-            fmt.Println(strings.Join(line, " "))
-        } else {
-            pid := f[0]
-            ni := f[1]
-            s := f[2]
-            line := []string{pid, ni, s}
-            fmt.Println(strings.Join(line, " "))
-        }
-    }
+    fmt.Println(
+        formatLines(proccessesSlice, "pid"),
+        formatLines(proccessesSlice, "ni"),
+        formatLines(proccessesSlice, "comm"))
 
+    // Layout: lists in VBox, on left Border, with a Centered HBox on right screen.
+    // Grid is probably better than VBox and HBox, because it reserves a minimum space.
+    // Right screen can also be a Form (https://youtu.be/LWn1403gY9E?t=717)
+    // All items are automatically rendered at the minimum size.
+    // Combining layouts is explained here: https://youtu.be/LWn1403gY9E?t=1061
 	a := app.New()
 	w := a.NewWindow("Renicer")
 
-    // This shows the program window, it uses the function formatProcesses with pretty much
-    // the same code as above. But I something is going wrong, it only prints the first line.
     content := widget.NewList(
-        func() int {
+        func() (int) {
             return len(proccessesSlice)
         },
-        func() fyne.CanvasObject {
+        func() (fyne.CanvasObject) {
             // This is the standard name for the items in the list
             return widget.NewLabel("Process")
         },
         func(i widget.ListItemID, o fyne.CanvasObject) {
-            o.(*widget.Label).SetText(formatProcesses(proccessesSlice))
+            o.(*widget.Label).SetText(
+                formatLines(proccessesSlice, "pid")[i],
+            )
         })
     w.SetContent(content)
 	w.ShowAndRun()
 }
-
 
 func processPaths(processName string) (path string) {
     path, err := exec.LookPath(processName)
@@ -79,28 +68,34 @@ func findProcesses(psPath string) (processes []string) {
     return outSingle
 }
 
-func formatProcesses(processes []string) (formatted string) {
+func formatLines(processes []string, outputfield string) (formatted []string) {
+    var allLines []string
     for i := 0; i < len(processes)-1; i++ {
         f := strings.Fields(processes[i])
-        if strings.Contains(f[2], "/") {
-            s := strings.Split(f[2], "/")
+        switch outputfield {
+        case "pid":
             pid := f[0]
+            allLines = append(allLines, []string{pid}...)
+        case "ni":
             ni := f[1]
-            comm := s[len(s)-1]
-            line := []string{pid, ni, comm}
-            return strings.Join(line, " ")
-        } else {
-            pid := f[0]
-            ni := f[1]
-            s := f[2]
-            line := []string{pid, ni, s}
-            return strings.Join(line, " ")
+            allLines = append(allLines, []string{ni}...)
+        default:
+            if strings.Contains(f[2], "/") {
+                s := strings.Split(f[2], "/")
+                comm := s[len(s)-1]
+                allLines = append(allLines, []string{comm}...)
+            } else {
+                comm := f[2]
+                allLines = append(allLines, []string{comm}...)
+            }
         }
     }
-    return "error"
+    return allLines
 }
 
 // Do 'ps ax -o pid,ni,comm' and make sort by name, procces number nice value
+// I.i.r.c. Linux has different words for the options, but if I look it up the only difference
+// is that in Linux you can also use cmd instead of comm
 
 // Put it in window something like this:
 // __________________________________________________
