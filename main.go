@@ -26,8 +26,8 @@ func main() {
     // Right screen can also be a Form (https://youtu.be/LWn1403gY9E?t=717)
     // All items are automatically rendered at the minimum size.
     // Combining layouts is explained here: https://youtu.be/LWn1403gY9E?t=1061
-	a := app.New()
-	w := a.NewWindow("Renicer")
+    a := app.New()
+    w := a.NewWindow("Renicer")
 
     content := widget.NewList(
         func() (int) {
@@ -43,7 +43,7 @@ func main() {
             )
         })
     w.SetContent(content)
-	w.ShowAndRun()
+    w.ShowAndRun()
 }
 
 func processPaths(processName string) (path string) {
