@@ -1,50 +1,68 @@
 package main
 
 import (
-    "fmt"
-    "log"
-    "os/exec"
-    "strings"
+	"fmt"
+	"log"
+	"os/exec"
+	"strings"
 
-    "fyne.io/fyne/v2"
-    "fyne.io/fyne/v2/app"
-    "fyne.io/fyne/v2/widget"
-)    
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/widget"
+	"fyne.io/fyne/v2/container"
+) 
+
+// Layout: lists in VBox, on left Border, with a Centered HBox on right screen.
+// Grid is probably better than VBox and HBox, because it reserves a minimum space.
+// Right screen can also be a Form (https://youtu.be/LWn1403gY9E?t=717)
+// All items are automatically rendered at the minimum size.
+// Combining layouts is explained here: https://youtu.be/LWn1403gY9E?t=1061
+func mainLayout(
+    ///pidcontent *widget.List,
+    ///nicontent *widget.List,
+    ///commcontent *widget.List,
+    wholeprocesses *widget.List,
+    searchbar *widget.Entry,
+    mainwindow *widget.Button,
+) *fyne.Container {
+    ///processes := container.NewHBox(
+    ///    pidcontent,
+    ///    nicontent,
+    ///    commcontent,
+    ///)
+    ///totalLayout := container.NewBorder(searchbar, nil, processes, nil, mainwindow)
+    totalLayout := container.NewBorder(searchbar, nil, wholeprocesses, nil, mainwindow)
+    return totalLayout
+}
 
 func main() {
     psPath := processPaths("ps")
     //renicePath := processPaths("renice")
-    proccessesSlice := findProcesses(psPath)
+    psOutput := findProcesses(psPath)
 
     fmt.Println(
-        formatLines(proccessesSlice, "pid"),
-        formatLines(proccessesSlice, "ni"),
-        formatLines(proccessesSlice, "comm"))
+        //formatLines(psOutput, "pid"),
+        //formatLines(psOutput, "ni"),
+        //formatLines(psOutput, "comm"),
+    )
 
-    // Layout: lists in VBox, on left Border, with a Centered HBox on right screen.
-    // Grid is probably better than VBox and HBox, because it reserves a minimum space.
-    // Right screen can also be a Form (https://youtu.be/LWn1403gY9E?t=717)
-    // All items are automatically rendered at the minimum size.
-    // Combining layouts is explained here: https://youtu.be/LWn1403gY9E?t=1061
     a := app.New()
     w := a.NewWindow("Renicer")
 
-    content := widget.NewList(
-        func() (int) {
-            return len(proccessesSlice)
-        },
-        func() (fyne.CanvasObject) {
-            // This is the standard name for the items in the list
-            return widget.NewLabel("Process")
-        },
-        func(i widget.ListItemID, o fyne.CanvasObject) {
-            o.(*widget.Label).SetText(
-                formatLines(proccessesSlice, "pid")[i],
-            )
-        })
+    ///pidcontent := processList(psOutput, "pid")
+    ///nicontent := processList(psOutput, "ni")
+    ///commcontent := processList(psOutput, "comm")
+    wholeprocesses := processList(psOutput, "")
+    search := &widget.Entry{PlaceHolder: "Search"}
+    mainwindow := &widget.Button{Text: "safe"}
+
+    ///content := mainLayout(pidcontent, nicontent, commcontent, search, mainwindow)
+    content := mainLayout(wholeprocesses, search, mainwindow)
+
     w.SetContent(content)
     w.ShowAndRun()
 }
+
 
 func processPaths(processName string) (path string) {
     path, err := exec.LookPath(processName)
@@ -68,6 +86,24 @@ func findProcesses(psPath string) (processes []string) {
     return outSingle
 }
 
+func formatWholeLines(processes []string) (formatted []string) {
+    var allLines []string
+    for i :=0; i < len(processes)-1; i++ {
+        f := strings.Fields(processes[i])
+        pid := f[0]
+        ni := f[1]
+        if strings.Contains(f[2], "/") {
+            s := strings.Split(f[2], "/")
+            comm := s[len(s)-1]
+            allLines = append(allLines, pid + " " + ni + " " + comm)
+        } else {
+            comm := f[2]
+            allLines = append(allLines, pid + " " + ni + " " + comm)
+        }
+    }
+    return allLines
+}
+
 func formatLines(processes []string, outputfield string) (formatted []string) {
     var allLines []string
     for i := 0; i < len(processes)-1; i++ {
@@ -79,7 +115,7 @@ func formatLines(processes []string, outputfield string) (formatted []string) {
         case "ni":
             ni := f[1]
             allLines = append(allLines, []string{ni}...)
-        default:
+        case "comm":
             if strings.Contains(f[2], "/") {
                 s := strings.Split(f[2], "/")
                 comm := s[len(s)-1]
@@ -88,12 +124,32 @@ func formatLines(processes []string, outputfield string) (formatted []string) {
                 comm := f[2]
                 allLines = append(allLines, []string{comm}...)
             }
+        default:
+            allLines = nil
         }
     }
     return allLines
 }
 
-// Do 'ps ax -o pid,ni,comm' and make sort by name, procces number nice value
+func processList(processSlice []string, column string) (content *widget.List) {
+    content = widget.NewList(
+        func() (int) {
+            return len(processSlice)
+        },
+        func() (fyne.CanvasObject) {
+            // This is the standard name for the items in the list
+            return widget.NewLabel("Process")
+        },
+        func(i widget.ListItemID, o fyne.CanvasObject) {
+            o.(*widget.Label).SetText(
+                ///formatLines(processSlice, column)[i],
+                formatWholeLines(processSlice)[i],
+            )
+        })
+        return content
+    }
+
+// Do 'ps ax -o pid,ni,comm' and make sort by name, process number nice value
 // I.i.r.c. Linux has different words for the options, but if I look it up the only difference
 // is that in Linux you can also use cmd instead of comm
 
