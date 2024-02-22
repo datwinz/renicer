@@ -1,16 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"os/exec"
-	"strings"
+    "fmt"
+    "log"
+    "os/exec"
+    "strings"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/widget"
-	"fyne.io/fyne/v2/container"
-) 
+    "fyne.io/fyne/v2"
+    "fyne.io/fyne/v2/app"
+    "fyne.io/fyne/v2/container"
+    "fyne.io/fyne/v2/layout"
+    "fyne.io/fyne/v2/widget"
+)
 
 // Layout: lists in VBox, on left Border, with a Centered HBox on right screen.
 // Grid is probably better than VBox and HBox, because it reserves a minimum space.
@@ -24,14 +25,15 @@ func mainLayout(
     wholeprocesses *widget.List,
     searchbar *widget.Entry,
     mainwindow *widget.Button,
-) *fyne.Container {
+) (*fyne.Container) {
     ///processes := container.NewHBox(
     ///    pidcontent,
     ///    nicontent,
     ///    commcontent,
     ///)
     ///totalLayout := container.NewBorder(searchbar, nil, processes, nil, mainwindow)
-    totalLayout := container.NewBorder(searchbar, nil, wholeprocesses, nil, mainwindow)
+    processes := container.New(layout.NewGridLayout(2), wholeprocesses, mainwindow)
+    totalLayout := container.NewBorder(searchbar, nil, nil, nil, processes)
     return totalLayout
 }
 
