@@ -19,19 +19,10 @@ import (
 // All items are automatically rendered at the minimum size.
 // Combining layouts is explained here: https://youtu.be/LWn1403gY9E?t=1061
 func mainLayout(
-    ///pidcontent *widget.List,
-    ///nicontent *widget.List,
-    ///commcontent *widget.List,
     wholeprocesses *widget.List,
     searchbar *widget.Entry,
     mainwindow *widget.Button,
 ) (*fyne.Container) {
-    ///processes := container.NewHBox(
-    ///    pidcontent,
-    ///    nicontent,
-    ///    commcontent,
-    ///)
-    ///totalLayout := container.NewBorder(searchbar, nil, processes, nil, mainwindow)
     processes := container.New(layout.NewGridLayout(2), wholeprocesses, mainwindow)
     totalLayout := container.NewBorder(searchbar, nil, nil, nil, processes)
     return totalLayout
@@ -51,14 +42,10 @@ func main() {
     a := app.New()
     w := a.NewWindow("Renicer")
 
-    ///pidcontent := processList(psOutput, "pid")
-    ///nicontent := processList(psOutput, "ni")
-    ///commcontent := processList(psOutput, "comm")
     wholeprocesses := processList(psOutput, "")
     search := &widget.Entry{PlaceHolder: "Search"}
     mainwindow := &widget.Button{Text: "safe"}
 
-    ///content := mainLayout(pidcontent, nicontent, commcontent, search, mainwindow)
     content := mainLayout(wholeprocesses, search, mainwindow)
 
     w.SetContent(content)
@@ -144,7 +131,6 @@ func processList(processSlice []string, column string) (content *widget.List) {
         },
         func(i widget.ListItemID, o fyne.CanvasObject) {
             o.(*widget.Label).SetText(
-                ///formatLines(processSlice, column)[i],
                 formatWholeLines(processSlice)[i],
             )
         })
