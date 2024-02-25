@@ -1,16 +1,16 @@
 package main
 
 import (
-    "fmt"
-    "log"
-    "os/exec"
-    "strings"
+	"fmt"
+	"log"
+	"os/exec"
+	"strings"
 
-    "fyne.io/fyne/v2"
-    "fyne.io/fyne/v2/app"
-    "fyne.io/fyne/v2/container"
-    "fyne.io/fyne/v2/layout"
-    "fyne.io/fyne/v2/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
 // Layout: lists in VBox, on left Border, with a Centered HBox on right screen.
@@ -21,7 +21,7 @@ import (
 func mainLayout(
     wholeprocesses *widget.List,
     searchbar *widget.Entry,
-    mainwindow *widget.Button,
+    mainwindow *widget.Form,
 ) (*fyne.Container) {
     processes := container.New(layout.NewGridLayout(2), wholeprocesses, mainwindow)
     totalLayout := container.NewBorder(searchbar, nil, nil, nil, processes)
@@ -42,9 +42,13 @@ func main() {
     a := app.New()
     w := a.NewWindow("Renicer")
 
-    wholeprocesses := processList(psOutput, "")
+    wholeprocesses, singleprocess := processList(psOutput, "")
+    //wholeprocesses, mainwindow := processList(psOutput, "")
     search := &widget.Entry{PlaceHolder: "Search"}
-    mainwindow := &widget.Button{Text: "safe"}
+    mainwindow := &widget.Form{
+        Items: []*widget.FormItem{ // we can specify items in the constructor
+			{Text: "Entry", Widget: widget.NewLabel(singleprocess)}},
+    }
 
     content := mainLayout(wholeprocesses, search, mainwindow)
 
@@ -120,7 +124,10 @@ func formatLines(processes []string, outputfield string) (formatted []string) {
     return allLines
 }
 
-func processList(processSlice []string, column string) (content *widget.List) {
+func processList(processSlice []string, column string) (
+    content *widget.List,
+    singlecontent string,
+    ) {
     content = widget.NewList(
         func() (int) {
             return len(processSlice)
@@ -134,5 +141,21 @@ func processList(processSlice []string, column string) (content *widget.List) {
                 formatWholeLines(processSlice)[i],
             )
         })
-    return content
+    var k string
+    content.OnSelected = func(i widget.ListItemID) {
+        j := processSlice[i]
+        k := strings.Fields(j)[2]
+        if strings.Contains(k, "/") {
+            s := strings.Split(k, "/")
+            k = s[len(s)-1]
+        }
+
+        //form = &widget.Form{
+        //    Items: []*widget.FormItem{
+        //        {Text: "Process", Widget: widget.NewLabel(k)}},
+        //}
+    }
+    //fmt.Println(form)
+    fmt.Println(k)
+    return content, k
 }
