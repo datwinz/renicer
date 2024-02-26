@@ -19,43 +19,92 @@ import (
 // All items are automatically rendered at the minimum size.
 // Combining layouts is explained here: https://youtu.be/LWn1403gY9E?t=1061
 func mainLayout(
-    wholeprocesses *widget.List,
-    searchbar *widget.Entry,
-    mainwindow *widget.Form,
+    wholeProcesses *widget.List,
+    searchBar *widget.Entry,
+    mainWindow *widget.Form,
 ) (*fyne.Container) {
-    processes := container.New(layout.NewGridLayout(2), wholeprocesses, mainwindow)
-    totalLayout := container.NewBorder(searchbar, nil, nil, nil, processes)
+    processes := container.New(layout.NewGridLayout(2), wholeProcesses, mainWindow)
+    totalLayout := container.NewBorder(searchBar, nil, nil, nil, processes)
     return totalLayout
 }
 
 func main() {
     psPath := processPaths("ps")
-    //renicePath := processPaths("renice")
-    psOutput := findProcesses(psPath)
+    renicePath := processPaths("renice")
+    manPath := processPaths("man")
 
-    fmt.Println(
-        //formatLines(psOutput, "pid"),
-        //formatLines(psOutput, "ni"),
-        //formatLines(psOutput, "comm"),
-    )
+    psOutput := findProcesses(psPath)
 
     a := app.New()
     w := a.NewWindow("Renicer")
 
-    wholeprocesses, singleprocess := processList(psOutput, "")
-    //wholeprocesses, mainwindow := processList(psOutput, "")
+    processListContent := widget.NewList(
+        func() (int) {
+            return len(psOutput)
+        },
+        func() (fyne.CanvasObject) {
+            // This is the standard name for the items in the list
+            return widget.NewLabel("Process")
+        },
+        func(i widget.ListItemID, o fyne.CanvasObject) {
+            o.(*widget.Label).SetText(
+                formatWholeLines(psOutput)[i],
+            )
+        },
+    )
+    psNameLabel := widget.NewLabel("process")
+    psNiLabel := widget.NewLabel("0")
+    var psPidValue string
+    psNiEntry := widget.NewEntry()
+    psSaveButtonFunction := func() {
+        // Do some validation (value between -20 and 19
+        value := psNiEntry.Text
+        fmt.Printf("%q %q %q", psPidValue, value, psNameLabel.Text)
+        // This always has exit status 1 for some reason
+        reniceCmd := exec.Command(renicePath, "renice", value, psPidValue)
+        err := reniceCmd.Run()
+        if err != nil {
+            log.Println(err)
+        }
+    }
+    psManpageButtonFunction := func () {
+        manCmd := exec.Command(manPath, psNameLabel.Text)
+        manCmd.Run()
+        // Somehow open terminal and show the process, this prints the pid
+        fmt.Println(manCmd.Process)
+    }
+
+    processListContent.OnSelected = func(i widget.ListItemID) {
+        j := psOutput[i]
+        k := strings.Fields(j)[2]
+        if strings.Contains(k, "/") {
+            s := strings.Split(k, "/")
+            k = s[len(s)-1]
+        }
+        l := strings.Fields(j)[1]
+        m := strings.Fields(j)[0]
+
+        psNameLabel.SetText(k)
+        psNiLabel.SetText(l)
+        psPidValue = m
+    }
+
     search := &widget.Entry{PlaceHolder: "Search"}
     mainwindow := &widget.Form{
         Items: []*widget.FormItem{ // we can specify items in the constructor
-			{Text: "Entry", Widget: widget.NewLabel(singleprocess)}},
+            {Text: "Process:", Widget: psNameLabel},
+            {Text: "Current nice value:", Widget: psNiLabel},
+            {Text: "New nice value:", Widget: psNiEntry},
+            {Widget: widget.NewButton("Save", psSaveButtonFunction)},
+            {Widget: widget.NewButton("man page", psManpageButtonFunction)},
+        },
     }
 
-    content := mainLayout(wholeprocesses, search, mainwindow)
+    content := mainLayout(processListContent, search, mainwindow)
 
     w.SetContent(content)
     w.ShowAndRun()
 }
-
 
 func processPaths(processName string) (path string) {
     path, err := exec.LookPath(processName)
@@ -122,40 +171,4 @@ func formatLines(processes []string, outputfield string) (formatted []string) {
         }
     }
     return allLines
-}
-
-func processList(processSlice []string, column string) (
-    content *widget.List,
-    singlecontent string,
-    ) {
-    content = widget.NewList(
-        func() (int) {
-            return len(processSlice)
-        },
-        func() (fyne.CanvasObject) {
-            // This is the standard name for the items in the list
-            return widget.NewLabel("Process")
-        },
-        func(i widget.ListItemID, o fyne.CanvasObject) {
-            o.(*widget.Label).SetText(
-                formatWholeLines(processSlice)[i],
-            )
-        })
-    var k string
-    content.OnSelected = func(i widget.ListItemID) {
-        j := processSlice[i]
-        k := strings.Fields(j)[2]
-        if strings.Contains(k, "/") {
-            s := strings.Split(k, "/")
-            k = s[len(s)-1]
-        }
-
-        //form = &widget.Form{
-        //    Items: []*widget.FormItem{
-        //        {Text: "Process", Widget: widget.NewLabel(k)}},
-        //}
-    }
-    //fmt.Println(form)
-    fmt.Println(k)
-    return content, k
 }
