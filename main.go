@@ -22,7 +22,7 @@ func mainLayout(
     wholeProcesses *widget.List,
     searchBar *widget.Entry,
     mainWindow *widget.Form,
-) (*fyne.Container) {
+    ) (*fyne.Container) {
     processes := container.New(layout.NewGridLayout(2), wholeProcesses, mainWindow)
     totalLayout := container.NewBorder(searchBar, nil, nil, nil, processes)
     return totalLayout
@@ -71,6 +71,7 @@ func main() {
         manCmd := exec.Command(manPath, psNameLabel.Text)
         manCmd.Run()
         // Somehow open terminal and show the process, this prints the pid
+        // I made a small C script for this wich gives a CLI tool, That will probably work.
         fmt.Println(manCmd.Process)
     }
 
