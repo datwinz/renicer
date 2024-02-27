@@ -11,14 +11,15 @@ int main(int argc, char *argv[]){
     char *arg;
     char *cmd;
 
-    man = (char *) malloc(5);
-    strcpy(man, "man ");
+    man = (char *) malloc(10);
+    strcpy(man, "sh -c \"man ");
     // The longest manpagename I have is 74 chars, which is ridiculously long, so this is
     // probably fine.
     arg = (char *) malloc(75);
     strcpy(arg, argv[1]);
+    arg = strcat(arg, "\"");
 
-    cmd = (char *) malloc(80);
+    cmd = (char *) malloc(85);
     strcpy(cmd, strcat(man, arg));
     system(cmd);
 
