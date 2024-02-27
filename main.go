@@ -97,7 +97,8 @@ func main() {
         manCmd := exec.Command(manPath, psNameLabel.Text)
         manCmd.Run()
         // Somehow open terminal and show the process, this prints the pid
-        // I made a small C script for this wich gives a CLI tool, That will probably work.
+        // I made a small C script but it doesn't work. So maybe I can spawn a terminal with
+        // the pid.
         fmt.Println(manCmd.Process)
     }
 
