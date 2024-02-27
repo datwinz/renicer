@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -22,7 +23,7 @@ func mainLayout(
     wholeProcesses *widget.List,
     searchBar *widget.Entry,
     mainWindow *widget.Form,
-) (*fyne.Container) {
+    ) (*fyne.Container) {
     processes := container.New(layout.NewGridLayout(2), wholeProcesses, mainWindow)
     totalLayout := container.NewBorder(searchBar, nil, nil, nil, processes)
     return totalLayout
@@ -56,21 +57,48 @@ func main() {
     psNiLabel := widget.NewLabel("0")
     var psPidValue string
     psNiEntry := widget.NewEntry()
+    messageLabel := widget.NewLabel("")
     psSaveButtonFunction := func() {
         // Do some validation (value between -20 and 19
         value := psNiEntry.Text
+        valueInt, err := strconv.Atoi(value)
+        if err != nil {
+            msg := "Can't convert to integer"
+            fmt.Println(msg)
+            messageLabel.SetText(msg)
+        }
+        if valueInt >= -20 && valueInt <= 19 {} else {
+            msg := "Value should be between -20 and 19"
+            fmt.Println(msg)
+            messageLabel.SetText(msg)
+            return
+        }
         fmt.Printf("%q %q %q", psPidValue, value, psNameLabel.Text)
         // This always has exit status 1 for some reason
-        reniceCmd := exec.Command(renicePath, "renice", value, psPidValue)
-        err := reniceCmd.Run()
+        if valueInt >=-20 && valueInt < 0 {
+            fmt.Println("Spawn polkitd or mac-like window because value")
+        }
+        reniceCmd := exec.Command(renicePath, value, psPidValue)
+        // I have to close the pipe somehow otherwise the program hangs
+        ///stderr, err := reniceCmd.StderrPipe()
+        ///slurp, _ := io.ReadAll(stderr)
+        ///fmt.Printf("%s\n", slurp)
+        // This doesnt work, I have to convert to slurp to string
+        ///if strings.Contains(slurp, "exit status 1") {
+        ///    fmt.Println("Spawn polkitd or mac-like window")
+        ///}
+        err = reniceCmd.Run()
         if err != nil {
             log.Println(err)
         }
+        messageLabel.SetText("")
     }
     psManpageButtonFunction := func () {
         manCmd := exec.Command(manPath, psNameLabel.Text)
         manCmd.Run()
         // Somehow open terminal and show the process, this prints the pid
+        // I made a small C script but it doesn't work. So maybe I can spawn a terminal with
+        // the pid.
         fmt.Println(manCmd.Process)
     }
 
@@ -96,6 +124,7 @@ func main() {
             {Text: "Current nice value:", Widget: psNiLabel},
             {Text: "New nice value:", Widget: psNiEntry},
             {Widget: widget.NewButton("Save", psSaveButtonFunction)},
+            {Widget: messageLabel},
             {Widget: widget.NewButton("man page", psManpageButtonFunction)},
         },
     }
