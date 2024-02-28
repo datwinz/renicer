@@ -36,6 +36,7 @@ func main() {
     psPath := processPaths("ps")
     renicePath := processPaths("renice")
     manPath := processPaths("man")
+    mandocPath := processPaths("mandoc")
 
     psOutput := findProcesses(psPath)
 
@@ -54,28 +55,35 @@ func main() {
     formNiEntry := widget.NewEntry()
     formMessageLabel := widget.NewLabel("")
     formSaveButtonFunction := func() {
-        value := formNiEntry.Text
-        valueInt, err := strconv.Atoi(value)
+        newValue := formNiEntry.Text
+        newValueInt, err := strconv.Atoi(newValue)
         if err != nil {
             msg := "New nice value should be a number"
             fmt.Println(msg)
             formMessageLabel.SetText(msg)
             return
         }
-        if valueInt < -20 && valueInt > 20 {
+        if newValueInt < -20 && newValueInt > 20 {
             msg := "New nice value should be between -20 and 20"
             fmt.Println(msg)
             formMessageLabel.SetText(msg)
             return
         }
-        fmt.Printf("%q %q %q", formPidValue, value, formNameLabel.Text)
+        oldValueInt, err := strconv.Atoi(formPidValue)
+        if err != nil {
+            msg := "Existing nice value isn't a number"
+            fmt.Println(msg)
+        }
+        fmt.Printf("%q %q %q", formPidValue, newValue, formNameLabel.Text)
         // Users other than the super-user may only alter the priority of processes they own,
         // and can only monotonically increase their ``nice value'' within the range 0 to
         // PRIO_MAX (20).
-        if valueInt >=-20 && valueInt < 0 {
+        if newValueInt >=-20 && newValueInt < 0 {
+            fmt.Println("Spawn polkitd or mac-like window because value")
+        } else if newValueInt < oldValueInt {
             fmt.Println("Spawn polkitd or mac-like window because value")
         }
-        reniceCmd := exec.Command(renicePath, value, formPidValue)
+        reniceCmd := exec.Command(renicePath, newValue, formPidValue)
         // I have to close the pipe somehow otherwise the program hangs
         ///stderr, err := reniceCmd.StderrPipe()
         ///slurp, _ := io.ReadAll(stderr)
@@ -91,12 +99,30 @@ func main() {
         formMessageLabel.SetText("")
     }
     formManpageButtonFunction := func () {
-        manCmd := exec.Command(manPath, formNameLabel.Text)
-        manCmd.Run()
-        // Somehow open terminal and show the process, this prints the pid
-        // I made a small C script but it doesn't work. So maybe I can spawn a terminal with
-        // the pid.
-        fmt.Println(manCmd.Process)
+        manPagePath := exec.Command(manPath, "-w", formNameLabel.Text)
+        var b strings.Builder
+        manPagePath.Stdout = &b
+        err := manPagePath.Run()
+        if err != nil {
+            fmt.Println("Couldn't find path of manpage")
+        }
+        manFilePath := strings.TrimSpace(b.String())
+
+        mandocCmd := exec.Command(mandocPath, "-Tmarkdown", manFilePath)
+        var c strings.Builder
+        mandocCmd.Stdout = &c
+        err = mandocCmd.Run()
+        if err != nil {
+            fmt.Println(err)
+        }
+
+        w2 := a.NewWindow("manpage")
+        text := widget.NewRichTextFromMarkdown(c.String())
+        w2.SetContent(text)
+        w2.Resize(w.Content().Size())
+        text.Wrapping = 2
+        // add scrolling somehow
+        w2.Show()
     }
 
     processListContent.OnSelected = func(i widget.ListItemID) {
