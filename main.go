@@ -42,19 +42,10 @@ func main() {
     a := app.New()
     w := a.NewWindow("Renicer")
 
-    processListContent := widget.NewList(
-        func() (int) {
-            return len(psOutput)
-        },
-        func() (fyne.CanvasObject) {
-            // This is the standard name for the items in the list
-            return widget.NewLabel("Process")
-        },
-        func(i widget.ListItemID, o fyne.CanvasObject) {
-            o.(*widget.Label).SetText(
-                formatWholeLines(psOutput)[i],
-            )
-        },
+    processListContent := makeListContent(
+        len(psOutput), 
+        "Process",
+        formatWholeLines(psOutput),
     )
 
     formNameLabel := widget.NewLabel("process")
@@ -78,9 +69,9 @@ func main() {
             return
         }
         fmt.Printf("%q %q %q", formPidValue, value, formNameLabel.Text)
-        //Users other than the super-user may only alter the priority of processes they own,
-        //and can only monotonically increase their ``nice value'' within the range 0 to
-        //PRIO_MAX (20)
+        // Users other than the super-user may only alter the priority of processes they own,
+        // and can only monotonically increase their ``nice value'' within the range 0 to
+        // PRIO_MAX (20).
         if valueInt >=-20 && valueInt < 0 {
             fmt.Println("Spawn polkitd or mac-like window because value")
         }
@@ -148,19 +139,7 @@ func main() {
                 searchResult = append(searchResult, allLines)
             }
         }
-        searchedListContent := widget.NewList(
-            func() (int) {
-                return len(searchResult)
-            },
-            func () (fyne.CanvasObject) {
-                return widget.NewLabel("Process")
-            },
-            func(j widget.ListItemID, p fyne.CanvasObject) {
-                p.(*widget.Label).SetText(
-                    searchResult[j],
-                )
-            },
-        )
+        searchedListContent := makeListContent(len(searchResult), "Process", searchResult)
         searchedListContent.OnSelected = func(i widget.ListItemID) {
             j := searchResult[i]
             k := strings.Fields(j)[2]
@@ -251,4 +230,21 @@ func formatLines(processes []string, outputfield string) (formatted []string) {
         }
     }
     return allLines
+}
+
+func makeListContent(lenOfList int, templateString string, labelText []string) (*widget.List) {
+    List := widget.NewList(
+        func() (int) {
+            return lenOfList
+        },
+        func () (fyne.CanvasObject) {
+            return widget.NewLabel(templateString)
+        },
+        func(i widget.ListItemID, o fyne.CanvasObject) {
+            o.(*widget.Label).SetText(
+                labelText[i],
+            )
+        },
+    )
+    return List
 }
