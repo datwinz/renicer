@@ -22,10 +22,13 @@ import (
 func mainLayout(
     wholeProcesses *widget.List,
     searchBar *widget.Entry,
+    searchBarButton *widget.Button,
     mainWindow *widget.Form,
     ) (*fyne.Container) {
     processes := container.New(layout.NewGridLayout(2), wholeProcesses, mainWindow)
-    totalLayout := container.NewBorder(searchBar, nil, nil, nil, processes)
+    searchBarLayout := container.New(layout.NewGridLayout(2),
+        container.NewPadded(searchBar), container.NewPadded(searchBarButton))
+    totalLayout := container.NewBorder(searchBarLayout, nil, nil, nil, processes)
     return totalLayout
 }
 
@@ -53,32 +56,35 @@ func main() {
             )
         },
     )
-    psNameLabel := widget.NewLabel("process")
-    psNiLabel := widget.NewLabel("0")
-    var psPidValue string
-    psNiEntry := widget.NewEntry()
-    messageLabel := widget.NewLabel("")
-    psSaveButtonFunction := func() {
-        // Do some validation (value between -20 and 19
-        value := psNiEntry.Text
+
+    formNameLabel := widget.NewLabel("process")
+    formNiLabel := widget.NewLabel("0")
+    var formPidValue string
+    formNiEntry := widget.NewEntry()
+    formMessageLabel := widget.NewLabel("")
+    formSaveButtonFunction := func() {
+        value := formNiEntry.Text
         valueInt, err := strconv.Atoi(value)
         if err != nil {
-            msg := "Can't convert to integer"
+            msg := "New nice value should be a number"
             fmt.Println(msg)
-            messageLabel.SetText(msg)
-        }
-        if valueInt >= -20 && valueInt <= 19 {} else {
-            msg := "Value should be between -20 and 19"
-            fmt.Println(msg)
-            messageLabel.SetText(msg)
+            formMessageLabel.SetText(msg)
             return
         }
-        fmt.Printf("%q %q %q", psPidValue, value, psNameLabel.Text)
-        // This always has exit status 1 for some reason
+        if valueInt < -20 && valueInt > 20 {
+            msg := "New nice value should be between -20 and 20"
+            fmt.Println(msg)
+            formMessageLabel.SetText(msg)
+            return
+        }
+        fmt.Printf("%q %q %q", formPidValue, value, formNameLabel.Text)
+        //Users other than the super-user may only alter the priority of processes they own,
+        //and can only monotonically increase their ``nice value'' within the range 0 to
+        //PRIO_MAX (20)
         if valueInt >=-20 && valueInt < 0 {
             fmt.Println("Spawn polkitd or mac-like window because value")
         }
-        reniceCmd := exec.Command(renicePath, value, psPidValue)
+        reniceCmd := exec.Command(renicePath, value, formPidValue)
         // I have to close the pipe somehow otherwise the program hangs
         ///stderr, err := reniceCmd.StderrPipe()
         ///slurp, _ := io.ReadAll(stderr)
@@ -91,10 +97,10 @@ func main() {
         if err != nil {
             log.Println(err)
         }
-        messageLabel.SetText("")
+        formMessageLabel.SetText("")
     }
-    psManpageButtonFunction := func () {
-        manCmd := exec.Command(manPath, psNameLabel.Text)
+    formManpageButtonFunction := func () {
+        manCmd := exec.Command(manPath, formNameLabel.Text)
         manCmd.Run()
         // Somehow open terminal and show the process, this prints the pid
         // I made a small C script but it doesn't work. So maybe I can spawn a terminal with
@@ -112,24 +118,69 @@ func main() {
         l := strings.Fields(j)[1]
         m := strings.Fields(j)[0]
 
-        psNameLabel.SetText(k)
-        psNiLabel.SetText(l)
-        psPidValue = m
+        formNameLabel.SetText(k)
+        formNiLabel.SetText(l)
+        formPidValue = m
     }
 
-    search := &widget.Entry{PlaceHolder: "Search"}
-    mainwindow := &widget.Form{
+    searchBar := widget.NewEntry()
+    searchBar.SetPlaceHolder("Search...")
+    searchBarButton := widget.NewButton("Search", func () {
+        searchBar.OnSubmitted(searchBar.Text)
+    })
+
+    mainWindow := &widget.Form{
         Items: []*widget.FormItem{ // we can specify items in the constructor
-            {Text: "Process:", Widget: psNameLabel},
-            {Text: "Current nice value:", Widget: psNiLabel},
-            {Text: "New nice value:", Widget: psNiEntry},
-            {Widget: widget.NewButton("Save", psSaveButtonFunction)},
-            {Widget: messageLabel},
-            {Widget: widget.NewButton("man page", psManpageButtonFunction)},
+            {Text: "Process:", Widget: formNameLabel},
+            {Text: "Current nice value:", Widget: formNiLabel},
+            {Text: "New nice value:", Widget: formNiEntry},
+            {Widget: widget.NewButton("Save", formSaveButtonFunction)},
+            {Widget: formMessageLabel},
+            {Widget: widget.NewButton("man page", formManpageButtonFunction)},
         },
     }
 
-    content := mainLayout(processListContent, search, mainwindow)
+    searchBar.OnSubmitted = func(searchTerm string) {
+        var searchResult []string
+        for i := 0; i < len(psOutput) - 1; i++ {
+            allLines := formatWholeLines(psOutput)[i]
+            if strings.Contains(allLines, searchTerm) {
+                searchResult = append(searchResult, allLines)
+            }
+        }
+        searchedListContent := widget.NewList(
+            func() (int) {
+                return len(searchResult)
+            },
+            func () (fyne.CanvasObject) {
+                return widget.NewLabel("Process")
+            },
+            func(j widget.ListItemID, p fyne.CanvasObject) {
+                p.(*widget.Label).SetText(
+                    searchResult[j],
+                )
+            },
+        )
+        searchedListContent.OnSelected = func(i widget.ListItemID) {
+            j := searchResult[i]
+            k := strings.Fields(j)[2]
+            l := strings.Fields(j)[1]
+            m := strings.Fields(j)[0]
+
+            formNameLabel.SetText(k)
+            formNiLabel.SetText(l)
+            formPidValue = m
+        }
+        fmt.Println(searchResult)
+        fmt.Println(len(searchResult))
+        content := mainLayout(searchedListContent,
+            searchBar,
+            searchBarButton,
+            mainWindow)
+        w.SetContent(content)
+    }
+
+    content := mainLayout(processListContent, searchBar, searchBarButton, mainWindow)
 
     w.SetContent(content)
     w.ShowAndRun()
@@ -159,7 +210,7 @@ func findProcesses(psPath string) (processes []string) {
 
 func formatWholeLines(processes []string) (formatted []string) {
     var allLines []string
-    for i :=0; i < len(processes)-1; i++ {
+    for i := 0; i < len(processes)-1; i++ {
         f := strings.Fields(processes[i])
         pid := f[0]
         ni := f[1]
