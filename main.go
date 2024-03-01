@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 
@@ -118,10 +119,10 @@ func main() {
 
         w2 := a.NewWindow("manpage")
         text := widget.NewRichTextFromMarkdown(c.String())
-        w2.SetContent(text)
+        textContainer := container.NewScroll(text)
+        w2.SetContent(textContainer)
         w2.Resize(w.Content().Size())
         text.Wrapping = 2
-        // add scrolling somehow
         w2.Show()
     }
 
@@ -129,8 +130,7 @@ func main() {
         j := psOutput[i]
         k := strings.Fields(j)[2]
         if strings.Contains(k, "/") {
-            s := strings.Split(k, "/")
-            k = s[len(s)-1]
+            k = path.Base(k)
         }
         l := strings.Fields(j)[1]
         m := strings.Fields(j)[0]
@@ -209,7 +209,6 @@ func findProcesses(psPath string) (processes []string) {
     }
 
     outSingle := strings.Split(outAll.String(), "\n")
-    //fmt.Println(outSingle)
     return outSingle
 }
 
@@ -220,8 +219,7 @@ func formatWholeLines(processes []string) (formatted []string) {
         pid := f[0]
         ni := f[1]
         if strings.Contains(f[2], "/") {
-            s := strings.Split(f[2], "/")
-            comm := s[len(s)-1]
+            comm := path.Base(f[2])
             allLines = append(allLines, pid + " " + ni + " " + comm)
         } else {
             comm := f[2]
@@ -244,8 +242,7 @@ func formatLines(processes []string, outputfield string) (formatted []string) {
             allLines = append(allLines, []string{ni}...)
         case "comm":
             if strings.Contains(f[2], "/") {
-                s := strings.Split(f[2], "/")
-                comm := s[len(s)-1]
+                comm := path.Base(f[2])
                 allLines = append(allLines, []string{comm}...)
             } else {
                 comm := f[2]
