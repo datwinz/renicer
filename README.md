@@ -1,6 +1,6 @@
 # renicer
 
-App to show nice values of processes and renice them. It is basically a wrapper around the ```ps``` and ```renice``` commands.  It can also sow manpages of commands that have them.
+App to show nice values of processes and renice them. It is basically a wrapper around the ```ps``` and ```renice``` commands.  It can also show manpages of commands that have them.
 
 ## Basic design outline
 
