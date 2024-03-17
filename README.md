@@ -35,9 +35,13 @@ Otherwise you can download the zip file under "Releases". Unzip it and move it t
 
 ## Build
 
+You need to install [go](https://go.dev/dl/) on your platform of choice. You also need [git](https://git-scm.com/downloads). Then run:
+
 ```bash
+git clone https://github.com/datwinz/renicer
+cd renicer
 go install fyne.io/fyne/v2/cmd/fyne@latest
-FYNE_THEME=light; fyne package --icon resources/renicer_light.png --name renicer
+fyne package --icon resources/renicer_light.png --name renicer
 # FYNE_THEME=dark; fyne package --icon resources/renicer_dark.png --name renicer
 ```
 
