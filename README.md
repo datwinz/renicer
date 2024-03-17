@@ -12,7 +12,7 @@ In this app you can change those values. Search for the name of the command you 
 
 ## Installing
 
-On MacOS you can use [brew](https://brew.sh)
+On MacOS you can use [brew](https://brew.sh):
 
 ```bash
 brew install datwinz/formulae-and-casks/renicer
