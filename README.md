@@ -8,7 +8,7 @@ It has some extra functionality, namely that you can show the manpages of the li
 
 Nice values dictate the scheduling priority of processes on *nixes. I.e. it changes how much process power the command or application gets from you CPU. The value ranges from -20 to 20, the *lower* the value, the *higher* the priority.
 
-In this app you can change those values. Search for the name of the command you want in the search bar on top. You can also search for the process ID or the nice value if you want. Put in a new nice value and click on safe. In a few cases you need superuser privileges, in those cases the app asks for authorisation.
+In this app you can change those values. Search for the name of the command you want in the search bar on top. You can also search for the process ID or the nice value if you want. Put in a new nice value and click on save. In a few cases you need superuser privileges, in those cases the app asks for authorisation.
 
 ## Installing
 
