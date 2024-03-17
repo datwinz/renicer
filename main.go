@@ -1,10 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -34,10 +35,17 @@ func mainLayout(
 }
 
 func main() {
+    logFile, err := os.OpenFile("/tmp/renicelog", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+    if err != nil {
+        log.Println("logfile:", err)
+    }
+    log.SetOutput(logFile)
+
     psPath := processPaths("ps")
     renicePath := processPaths("renice")
     manPath := processPaths("man")
     mandocPath := processPaths("mandoc")
+    osaPath := processPaths("osascript")
 
     psOutput := findProcesses(psPath)
 
@@ -60,42 +68,62 @@ func main() {
         newValueInt, err := strconv.Atoi(newValue)
         if err != nil {
             msg := "New nice value should be a number"
-            fmt.Println(msg)
+            log.Println("form:", msg)
             formMessageLabel.SetText(msg)
             return
         }
         if newValueInt < -20 && newValueInt > 20 {
             msg := "New nice value should be between -20 and 20"
-            fmt.Println(msg)
+            log.Println("form:", msg)
             formMessageLabel.SetText(msg)
             return
         }
-        oldValueInt, err := strconv.Atoi(formPidValue)
+        oldValueInt, err := strconv.Atoi(formNiLabel.Text)
         if err != nil {
             msg := "Existing nice value isn't a number"
-            fmt.Println(msg)
+            log.Println("form:", msg)
         }
-        fmt.Printf("%q %q %q", formPidValue, newValue, formNameLabel.Text)
+        log.Printf("form new values: %q %q %q", formPidValue, newValue, formNameLabel.Text)
         // Users other than the super-user may only alter the priority of processes they own,
         // and can only monotonically increase their ``nice value'' within the range 0 to
         // PRIO_MAX (20).
         if newValueInt >=-20 && newValueInt < 0 {
-            fmt.Println("Spawn polkitd or mac-like window because value")
+            if runtime.GOOS == "darwin" {
+                osaInnerScript := "renice" + " " + newValue + " " + formPidValue
+                osaOuterScript := "do shell script \"" +
+                osaInnerScript +
+                "\" with administrator privileges"
+                osaReniceCmd := exec.Command(osaPath, "-e", osaOuterScript)
+                err = osaReniceCmd.Run()
+                if err != nil {
+                    log.Println("osascript renice:", err)
+                }
+                formMessageLabel.SetText("")
+                return
+            } else if runtime.GOOS == "linux" {
+                // use https://pkg.go.dev/github.com/amenzhinsky/go-polkit probs
+            }
         } else if newValueInt < oldValueInt {
-            fmt.Println("Spawn polkitd or mac-like window because value")
+            if runtime.GOOS == "darwin" {
+                osaInnerScript := "renice" + " " + newValue + " " + formPidValue
+                osaOuterScript := "do shell script \"" +
+                osaInnerScript +
+                "\" with administrator privileges"
+                osaReniceCmd := exec.Command(osaPath, "-e", osaOuterScript)
+                err = osaReniceCmd.Run()
+                if err != nil {
+                    log.Println("osascript renice:", err)
+                }
+                formMessageLabel.SetText("")
+                return
+            } else if runtime.GOOS == "linux" {
+                // use https://pkg.go.dev/github.com/amenzhinsky/go-polkit probs
+            }
         }
         reniceCmd := exec.Command(renicePath, newValue, formPidValue)
-        // I have to close the pipe somehow otherwise the program hangs
-        ///stderr, err := reniceCmd.StderrPipe()
-        ///slurp, _ := io.ReadAll(stderr)
-        ///fmt.Printf("%s\n", slurp)
-        // This doesnt work, I have to convert to slurp to string
-        ///if strings.Contains(slurp, "exit status 1") {
-        ///    fmt.Println("Spawn polkitd or mac-like window")
-        ///}
         err = reniceCmd.Run()
         if err != nil {
-            log.Println(err)
+            log.Println("renice:", err)
         }
         formMessageLabel.SetText("")
     }
@@ -105,7 +133,7 @@ func main() {
         manPagePath.Stdout = &b
         err := manPagePath.Run()
         if err != nil {
-            fmt.Println("Couldn't find path of manpage")
+            log.Println("man: Couldn't find path of manpage")
         }
         manFilePath := strings.TrimSpace(b.String())
 
@@ -114,7 +142,7 @@ func main() {
         mandocCmd.Stdout = &c
         err = mandocCmd.Run()
         if err != nil {
-            fmt.Println(err)
+            log.Println("man:", err)
         }
 
         w2 := a.NewWindow("manpage")
@@ -176,8 +204,8 @@ func main() {
             formNiLabel.SetText(l)
             formPidValue = m
         }
-        fmt.Println(searchResult)
-        fmt.Println(len(searchResult))
+        log.Println("search result:", searchResult)
+        log.Println("search length:", len(searchResult))
         content := mainLayout(searchedListContent,
             searchBar,
             searchBarButton,
@@ -194,7 +222,7 @@ func main() {
 func processPaths(processName string) (path string) {
     path, err := exec.LookPath(processName)
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("process path:", err)
     }
     return path
 }
@@ -205,7 +233,7 @@ func findProcesses(psPath string) (processes []string) {
     psCmd.Stdout = &outAll
     err := psCmd.Run()
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("processes:", err)
     }
 
     outSingle := strings.Split(outAll.String(), "\n")

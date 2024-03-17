@@ -2,6 +2,8 @@
 
 App to show nice values of processes and renice them. It is basically a wrapper around the ```ps``` and ```renice``` commands. 
 
+I has some extra functionality, namely that you can show the manpages of the listed processes. That uses the ```man``` and the ```mandoc``` command. It authorises on MacOS with ```osascript``` and on Linux with ```polkit```.
+
 ## Basic design outline
 
 Do 'ps ax -o pid,ni,comm' and make sort by name, process number nice value
