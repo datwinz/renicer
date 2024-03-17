@@ -45,7 +45,6 @@ func main() {
     renicePath := processPaths("renice")
     manPath := processPaths("man")
     mandocPath := processPaths("mandoc")
-    osaPath := processPaths("osascript")
 
     psOutput := findProcesses(psPath)
 
@@ -89,15 +88,7 @@ func main() {
         // PRIO_MAX (20).
         if newValueInt >=-20 && newValueInt < 0 {
             if runtime.GOOS == "darwin" {
-                osaInnerScript := "renice" + " " + newValue + " " + formPidValue
-                osaOuterScript := "do shell script \"" +
-                osaInnerScript +
-                "\" with administrator privileges"
-                osaReniceCmd := exec.Command(osaPath, "-e", osaOuterScript)
-                err = osaReniceCmd.Run()
-                if err != nil {
-                    log.Println("osascript renice:", err)
-                }
+                macAuthorisation(newValue, formPidValue)
                 formMessageLabel.SetText("")
                 return
             } else if runtime.GOOS == "linux" {
@@ -105,15 +96,7 @@ func main() {
             }
         } else if newValueInt < oldValueInt {
             if runtime.GOOS == "darwin" {
-                osaInnerScript := "renice" + " " + newValue + " " + formPidValue
-                osaOuterScript := "do shell script \"" +
-                osaInnerScript +
-                "\" with administrator privileges"
-                osaReniceCmd := exec.Command(osaPath, "-e", osaOuterScript)
-                err = osaReniceCmd.Run()
-                if err != nil {
-                    log.Println("osascript renice:", err)
-                }
+                macAuthorisation(newValue, formPidValue)
                 formMessageLabel.SetText("")
                 return
             } else if runtime.GOOS == "linux" {
@@ -124,6 +107,13 @@ func main() {
         err = reniceCmd.Run()
         if err != nil {
             log.Println("renice:", err)
+            if runtime.GOOS == "darwin" {
+                macAuthorisation(newValue, formPidValue)
+                formMessageLabel.SetText("")
+                return
+            } else if runtime.GOOS == "linux" {
+                // use https://pkg.go.dev/github.com/amenzhinsky/go-polkit probs
+            }
         }
         formMessageLabel.SetText("")
     }
@@ -298,4 +288,17 @@ func makeListContent(lenOfList int, templateString string, labelText []string) (
         },
     )
     return List
+}
+
+func macAuthorisation(niceValue string, pidValue string) {
+    osaPath := processPaths("osascript")
+    osaInnerScript := "renice" + " " + niceValue + " " + pidValue
+    osaOuterScript := "do shell script \"" +
+        osaInnerScript +
+        "\" with administrator privileges"
+    osaReniceCmd := exec.Command(osaPath, "-e", osaOuterScript)
+    err := osaReniceCmd.Run()
+    if err != nil {
+        log.Println("osascript renice:", err)
+    }
 }
