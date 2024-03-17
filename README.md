@@ -2,13 +2,23 @@
 
 App to show nice values of processes and renice them. It is basically a wrapper around the ```ps``` and ```renice``` commands.  It can also show manpages of commands that have them.
 
-I has some extra functionality, namely that you can show the manpages of the listed processes. That uses the ```man``` and the ```mandoc``` command. It authorises on MacOS with ```osascript```. In the future it wil authorise on Linux with ```polkit```.
+It has some extra functionality, namely that you can show the manpages of the listed processes. That uses the ```man``` and the ```mandoc``` command. It authorises on MacOS with ```osascript```. In the future it wil authorise on Linux with ```polkit```.
 
 ## Usage
 
 Nice values dictate the scheduling priority of processes on *nixes. I.e. it changes how much process power the command or application gets from you CPU. The value ranges from -20 to 20, the *lower* the value, the *higher* the priority.
 
 In this app you can change those values. Search for the name of the command you want in the search bar on top. You can also search for the process ID or the nice value if you want. Put in a new nice value and click on safe. In a few cases you need superuser privileges, in those cases the app asks for authorisation.
+
+## Installing
+
+On MacOS you can use [brew](https://brew.sh)
+
+```bash
+brew install datwinz/formulae-and-casks/renicer
+```
+
+Otherwise you can download the zip file under "Releases". Unzip it and move it to your applications folder.
 
 ## Dependencies
 
