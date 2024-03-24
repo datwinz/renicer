@@ -218,7 +218,7 @@ func processPaths(processName string) (path string) {
 }
 
 func findProcesses(psPath string) (processes []string) {
-    psCmd := exec.Command(psPath, "ax", "-o pid,ni,comm")
+    psCmd := exec.Command(psPath, "ax", "-o", "pid,ni,comm")
     var outAll strings.Builder
     psCmd.Stdout = &outAll
     err := psCmd.Run()
