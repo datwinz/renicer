@@ -37,7 +37,7 @@ func mainLayout(
 func main() {
     logFile, err := os.OpenFile("/tmp/renicelog", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
     if err != nil {
-        log.Println("logfile:", err)
+        log.Println("[INFO] logfile:", err)
     }
     log.SetOutput(logFile)
 
@@ -67,20 +67,20 @@ func main() {
         newValueInt, err := strconv.Atoi(newValue)
         if err != nil {
             msg := "New nice value should be a number"
-            log.Println("form:", msg)
+            log.Println("[INFO] form:", msg)
             formMessageLabel.SetText(msg)
             return
         }
         if newValueInt < -20 && newValueInt > 20 {
             msg := "New nice value should be between -20 and 20"
-            log.Println("form:", msg)
+            log.Println("[INFO] form:", msg)
             formMessageLabel.SetText(msg)
             return
         }
         oldValueInt, err := strconv.Atoi(formNiLabel.Text)
         if err != nil {
             msg := "Existing nice value isn't a number"
-            log.Println("form:", msg)
+            log.Println("[INFO] form:", msg)
         }
         log.Printf("form new values: %q %q %q", formPidValue, newValue, formNameLabel.Text)
         // Users other than the super-user may only alter the priority of processes they own,
@@ -106,7 +106,7 @@ func main() {
         reniceCmd := exec.Command(renicePath, newValue, formPidValue)
         err = reniceCmd.Run()
         if err != nil {
-            log.Println("renice:", err)
+            log.Println("[INFO] renice:", err)
             if runtime.GOOS == "darwin" {
                 macAuthorisation(newValue, formPidValue)
                 formMessageLabel.SetText("")
@@ -123,7 +123,7 @@ func main() {
         manPagePath.Stdout = &b
         err := manPagePath.Run()
         if err != nil {
-            log.Println("man: Couldn't find path of manpage")
+            log.Println("[INFO] man: Couldn't find path of manpage")
         }
         manFilePath := strings.TrimSpace(b.String())
 
@@ -132,7 +132,7 @@ func main() {
         mandocCmd.Stdout = &c
         err = mandocCmd.Run()
         if err != nil {
-            log.Println("man:", err)
+            log.Println("[INFO] man:", err)
         }
 
         w2 := a.NewWindow("manpage")
@@ -194,8 +194,8 @@ func main() {
             formNiLabel.SetText(l)
             formPidValue = m
         }
-        log.Println("search result:", searchResult)
-        log.Println("search length:", len(searchResult))
+        log.Println("[INFO] search result:", searchResult)
+        log.Println("[INFO] search length:", len(searchResult))
         content := mainLayout(searchedListContent,
             searchBar,
             searchBarButton,
@@ -212,7 +212,7 @@ func main() {
 func processPaths(processName string) (path string) {
     path, err := exec.LookPath(processName)
     if err != nil {
-        log.Fatal("process path:", err)
+        log.Fatal("[ERROR] process path:", err)
     }
     return path
 }
@@ -223,7 +223,7 @@ func findProcesses(psPath string) (processes []string) {
     psCmd.Stdout = &outAll
     err := psCmd.Run()
     if err != nil {
-        log.Fatal("processes:", err)
+        log.Fatal("[ERROR] processes:", err)
     }
 
     outSingle := strings.Split(outAll.String(), "\n")
@@ -299,6 +299,6 @@ func macAuthorisation(niceValue string, pidValue string) {
     osaReniceCmd := exec.Command(osaPath, "-e", osaOuterScript)
     err := osaReniceCmd.Run()
     if err != nil {
-        log.Println("osascript renice:", err)
+        log.Println("[INFO] osascript renice:", err)
     }
 }
