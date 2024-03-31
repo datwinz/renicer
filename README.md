@@ -2,7 +2,7 @@
 
 App to show nice values of processes and renice them. It is basically a wrapper around the ```ps``` and ```renice``` commands.  It can also show manpages of commands that have them.
 
-It has some extra functionality, namely that you can show the manpages of the listed processes. That uses the ```man``` and the ```mandoc``` command. It authorises on MacOS with ```osascript```. In the future it wil authorise on Linux with ```polkit```.
+It has some extra functionality, namely that you can show the manpages of the listed processes. That uses the ```man``` and the ```mandoc``` command. It authorises on MacOS with ```osascript``` and on Linux with ```pkexec``` (using [polkit](https://github.com/polkit-org/polkit?tab=readme-ov-file)).
 
 ## Usage
 
@@ -20,6 +20,17 @@ brew install datwinz/formulae-and-casks/renicer
 
 Otherwise you can download the zip file under "Releases". Unzip it and move it to your applications folder.
 
+On Linux you can install with the Makefile:
+
+```bash
+# Install in ~/.local/
+make user-install
+# System install
+sudo make install
+```
+
+Or move the renicer binary into your path.
+
 ## Dependencies
 
 ### Commands/binaries in $PATH
@@ -32,6 +43,10 @@ Otherwise you can download the zip file under "Releases". Unzip it and move it t
 #### MacOS
 
 * ```osascript```
+
+#### Linux
+
+* ```pkexec```
 
 ## Build
 
@@ -67,4 +82,4 @@ __________________________________________________
 
 - [x] Add search.
 - [x] Show man pages or something for processes on double click.
-- [ ] Use polkit for linux and some privilege escalation for mac.
+- [x] Use polkit for linux and some privilege escalation for mac.
