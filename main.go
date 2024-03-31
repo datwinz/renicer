@@ -92,7 +92,9 @@ func main() {
                 formMessageLabel.SetText("")
                 return
             } else if runtime.GOOS == "linux" {
-                // use https://pkg.go.dev/github.com/amenzhinsky/go-polkit probs
+                linuxPolkitAuthorisation(newValue, formPidValue)
+                formMessageLabel.SetText("")
+                return
             }
         } else if newValueInt < oldValueInt {
             if runtime.GOOS == "darwin" {
@@ -100,7 +102,9 @@ func main() {
                 formMessageLabel.SetText("")
                 return
             } else if runtime.GOOS == "linux" {
-                // use https://pkg.go.dev/github.com/amenzhinsky/go-polkit probs
+                linuxPolkitAuthorisation(newValue, formPidValue)
+                formMessageLabel.SetText("")
+                return
             }
         }
         reniceCmd := exec.Command(renicePath, newValue, formPidValue)
@@ -112,7 +116,9 @@ func main() {
                 formMessageLabel.SetText("")
                 return
             } else if runtime.GOOS == "linux" {
-                // use https://pkg.go.dev/github.com/amenzhinsky/go-polkit probs
+                linuxPolkitAuthorisation(newValue, formPidValue)
+                formMessageLabel.SetText("")
+                return
             }
         }
         formMessageLabel.SetText("")
@@ -292,7 +298,7 @@ func makeListContent(lenOfList int, templateString string, labelText []string) (
 
 func macAuthorisation(niceValue string, pidValue string) {
     osaPath := processPaths("osascript")
-    osaInnerScript := "renice" + " " + niceValue + " " + pidValue
+    osaInnerScript := "renice " + niceValue + " " + pidValue
     osaOuterScript := "do shell script \"" +
         osaInnerScript +
         "\" with administrator privileges"
@@ -300,5 +306,14 @@ func macAuthorisation(niceValue string, pidValue string) {
     err := osaReniceCmd.Run()
     if err != nil {
         log.Println("[INFO] osascript renice:", err)
+    }
+}
+
+func linuxPolkitAuthorisation(niceValue string, pidValue string) {
+    pkexecPath := processPaths("pkexec")
+    pkexecCmd := exec.Command(pkexecPath, "renice", niceValue, pidValue)
+    err := pkexecCmd.Run()
+    if err != nil {
+        log.Println("[INFO] pkexec renice:", err)
     }
 }
