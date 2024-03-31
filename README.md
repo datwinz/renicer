@@ -6,7 +6,7 @@ It has some extra functionality, namely that you can show the manpages of the li
 
 ## Usage
 
-<img width="491" alt="renicer_example" src="https://github.com/datwinz/renicer/assets/77931290/f9d2fef7-64af-4dbb-b233-6bc862584a8a">
+<img width="483" alt="renicer_example" src="https://github.com/datwinz/renicer/assets/77931290/b0650064-445a-4cbf-a01e-0405dc1314e4">
 
 Nice values dictate the scheduling priority of processes on *nixes. I.e. it changes how much process power the command or application gets from you CPU. The value ranges from -20 to 20, the *lower* the value, the *higher* the priority.
 
