@@ -6,6 +6,8 @@ It has some extra functionality, namely that you can show the manpages of the li
 
 ## Usage
 
+<img width="491" alt="renicer_example" src="https://github.com/datwinz/renicer/assets/77931290/f9d2fef7-64af-4dbb-b233-6bc862584a8a">
+
 Nice values dictate the scheduling priority of processes on *nixes. I.e. it changes how much process power the command or application gets from you CPU. The value ranges from -20 to 20, the *lower* the value, the *higher* the priority.
 
 In this app you can change those values. Search for the name of the command you want in the search bar on top. You can also search for the process ID or the nice value if you want. Put in a new nice value and click on save. In a few cases you need superuser privileges, in those cases the app asks for authorisation.
