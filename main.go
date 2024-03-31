@@ -150,6 +150,17 @@ func main() {
         w2.Show()
     }
 
+    mainWindowForm := &widget.Form{
+        Items: []*widget.FormItem{ // we can specify items in the constructor
+            {Text: "Process:", Widget: formNameLabel},
+            {Text: "Current nice value:", Widget: formNiLabel},
+            {Text: "New nice value:", Widget: formNiEntry},
+            {Widget: widget.NewButton("Save", formSaveButtonFunction)},
+            {Widget: formMessageLabel},
+            {Widget: widget.NewButton("man page", formManpageButtonFunction)},
+        },
+    }
+
     processListContent.OnSelected = func(i widget.ListItemID) {
         j := psOutput[i]
         k := strings.Fields(j)[2]
@@ -169,17 +180,6 @@ func main() {
     searchBarButton := widget.NewButton("Search", func () {
         searchBar.OnSubmitted(searchBar.Text)
     })
-
-    mainWindow := &widget.Form{
-        Items: []*widget.FormItem{ // we can specify items in the constructor
-            {Text: "Process:", Widget: formNameLabel},
-            {Text: "Current nice value:", Widget: formNiLabel},
-            {Text: "New nice value:", Widget: formNiEntry},
-            {Widget: widget.NewButton("Save", formSaveButtonFunction)},
-            {Widget: formMessageLabel},
-            {Widget: widget.NewButton("man page", formManpageButtonFunction)},
-        },
-    }
 
     searchBar.OnSubmitted = func(searchTerm string) {
         var searchResult []string
@@ -205,11 +205,11 @@ func main() {
         content := mainLayout(searchedListContent,
             searchBar,
             searchBarButton,
-            mainWindow)
+            mainWindowForm)
         w.SetContent(content)
     }
 
-    content := mainLayout(processListContent, searchBar, searchBarButton, mainWindow)
+    content := mainLayout(processListContent, searchBar, searchBarButton, mainWindowForm)
 
     w.SetContent(content)
     w.ShowAndRun()
