@@ -87,39 +87,29 @@ func main() {
         // and can only monotonically increase their ``nice value'' within the range 0 to
         // PRIO_MAX (20).
         if newValueInt >=-20 && newValueInt < 0 {
-            if runtime.GOOS == "darwin" {
-                macAuthorisation(newValue, formPidValue)
-                formMessageLabel.SetText("")
-                return
-            } else if runtime.GOOS == "linux" {
-                linuxPolkitAuthorisation(newValue, formPidValue)
-                formMessageLabel.SetText("")
-                return
-            }
+            authorisationConditional(formMessageLabel, newValue, formPidValue)
+            newPsOutput := findProcesses(psPath)
+            processListContent = makeListContent(
+                len(newPsOutput),
+                "Process",
+                formatWholeLines(newPsOutput),
+            )
+            // This doesn't work. As in processListContent gets updated, but the content of w
+            // doesn't. I can't redraw the whole screen as in the searchBar.OnSubmitted
+            // function because of recursion: the var content needs the formSaveButtonFunction
+            // and the redrawing of the whole screen needs the var content.
+            w.Content().Refresh()
+            return
         } else if newValueInt < oldValueInt {
-            if runtime.GOOS == "darwin" {
-                macAuthorisation(newValue, formPidValue)
-                formMessageLabel.SetText("")
-                return
-            } else if runtime.GOOS == "linux" {
-                linuxPolkitAuthorisation(newValue, formPidValue)
-                formMessageLabel.SetText("")
-                return
-            }
+            authorisationConditional(formMessageLabel, newValue, formPidValue)
+            return
         }
         reniceCmd := exec.Command(renicePath, newValue, formPidValue)
         err = reniceCmd.Run()
         if err != nil {
             log.Println("[INFO] renice:", err)
-            if runtime.GOOS == "darwin" {
-                macAuthorisation(newValue, formPidValue)
-                formMessageLabel.SetText("")
-                return
-            } else if runtime.GOOS == "linux" {
-                linuxPolkitAuthorisation(newValue, formPidValue)
-                formMessageLabel.SetText("")
-                return
-            }
+            authorisationConditional(formMessageLabel, newValue, formPidValue)
+            return
         }
         formMessageLabel.SetText("")
     }
@@ -149,7 +139,6 @@ func main() {
         text.Wrapping = 2
         w2.Show()
     }
-
     mainWindowForm := &widget.Form{
         Items: []*widget.FormItem{ // we can specify items in the constructor
             {Text: "Process:", Widget: formNameLabel},
@@ -210,6 +199,7 @@ func main() {
     }
 
     content := mainLayout(processListContent, searchBar, searchBarButton, mainWindowForm)
+
 
     w.SetContent(content)
     w.ShowAndRun()
@@ -315,5 +305,19 @@ func linuxPolkitAuthorisation(niceValue string, pidValue string) {
     err := pkexecCmd.Run()
     if err != nil {
         log.Println("[INFO] pkexec renice:", err)
+    }
+}
+
+func authorisationConditional(pidLabel *widget.Label, niceValue string, pidValue string) {
+    if runtime.GOOS == "darwin" {
+        macAuthorisation(niceValue, pidValue)
+        pidLabel.SetText("")
+        //w.Content().Refresh()
+        return
+    } else if runtime.GOOS == "linux" {
+        linuxPolkitAuthorisation(niceValue, pidValue)
+        pidLabel.SetText("")
+        //w.Content().Refresh()
+        return
     }
 }
