@@ -88,6 +88,17 @@ func main() {
         // PRIO_MAX (20).
         if newValueInt >=-20 && newValueInt < 0 {
             authorisationConditional(formMessageLabel, newValue, formPidValue)
+            newPsOutput := findProcesses(psPath)
+            processListContent = makeListContent(
+                len(newPsOutput),
+                "Process",
+                formatWholeLines(newPsOutput),
+            )
+            // This doesn't work. As in processListContent gets updated, but the content of w
+            // doesn't. I can't redraw the whole screen as in the searchBar.OnSubmitted
+            // function because of recursion: the var content needs the formSaveButtonFunction
+            // and the redrawing of the whole screen needs the var content.
+            w.Content().Refresh()
             return
         } else if newValueInt < oldValueInt {
             authorisationConditional(formMessageLabel, newValue, formPidValue)
