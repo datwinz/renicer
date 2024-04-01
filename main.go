@@ -48,8 +48,8 @@ func main() {
 
     psOutput := findProcesses(psPath)
 
-    a := app.New()
-    w := a.NewWindow("Renicer")
+    app := app.New()
+    window := app.NewWindow("Renicer")
 
     processListContent := makeListContent(
         len(psOutput), 
@@ -98,7 +98,7 @@ func main() {
             // doesn't. I can't redraw the whole screen as in the searchBar.OnSubmitted
             // function because of recursion: the var content needs the formSaveButtonFunction
             // and the redrawing of the whole screen needs the var content.
-            w.Content().Refresh()
+            window.Content().Refresh()
             return
         } else if newValueInt < oldValueInt {
             authorisationConditional(formMessageLabel, newValue, formPidValue)
@@ -131,13 +131,13 @@ func main() {
             log.Println("[INFO] man:", err)
         }
 
-        w2 := a.NewWindow("manpage")
+        windowChild := app.NewWindow("manpage")
         text := widget.NewRichTextFromMarkdown(c.String())
         textContainer := container.NewScroll(text)
-        w2.SetContent(textContainer)
-        w2.Resize(w.Content().Size())
+        windowChild.SetContent(textContainer)
+        windowChild.Resize(window.Content().Size())
         text.Wrapping = 2
-        w2.Show()
+        windowChild.Show()
     }
     mainWindowForm := &widget.Form{
         Items: []*widget.FormItem{ // we can specify items in the constructor
@@ -151,17 +151,17 @@ func main() {
     }
 
     processListContent.OnSelected = func(i widget.ListItemID) {
-        j := psOutput[i]
-        k := strings.Fields(j)[2]
-        if strings.Contains(k, "/") {
-            k = path.Base(k)
+        selectedProcess := psOutput[i]
+        selectedProcessName := strings.Fields(selectedProcess)[2]
+        if strings.Contains(selectedProcessName, "/") {
+            selectedProcessName = path.Base(selectedProcessName)
         }
-        l := strings.Fields(j)[1]
-        m := strings.Fields(j)[0]
+        selectedProcessNice := strings.Fields(selectedProcess)[1]
+        selectedProcessPid := strings.Fields(selectedProcess)[0]
 
-        formNameLabel.SetText(k)
-        formNiLabel.SetText(l)
-        formPidValue = m
+        formNameLabel.SetText(selectedProcessName)
+        formNiLabel.SetText(selectedProcessNice)
+        formPidValue = selectedProcessPid
     }
 
     searchBar := widget.NewEntry()
@@ -180,14 +180,14 @@ func main() {
         }
         searchedListContent := makeListContent(len(searchResult), "Process", searchResult)
         searchedListContent.OnSelected = func(i widget.ListItemID) {
-            j := searchResult[i]
-            k := strings.Fields(j)[2]
-            l := strings.Fields(j)[1]
-            m := strings.Fields(j)[0]
+            selectedProcess := searchResult[i]
+            selectedProcessName := strings.Fields(selectedProcess)[2]
+            selectedProcessNice := strings.Fields(selectedProcess)[1]
+            selectedProcessPid := strings.Fields(selectedProcess)[0]
 
-            formNameLabel.SetText(k)
-            formNiLabel.SetText(l)
-            formPidValue = m
+            formNameLabel.SetText(selectedProcessName)
+            formNiLabel.SetText(selectedProcessNice)
+            formPidValue = selectedProcessPid
         }
         log.Println("[INFO] search result:", searchResult)
         log.Println("[INFO] search length:", len(searchResult))
@@ -195,14 +195,14 @@ func main() {
             searchBar,
             searchBarButton,
             mainWindowForm)
-        w.SetContent(content)
+        window.SetContent(content)
     }
 
     content := mainLayout(processListContent, searchBar, searchBarButton, mainWindowForm)
 
 
-    w.SetContent(content)
-    w.ShowAndRun()
+    window.SetContent(content)
+    window.ShowAndRun()
 }
 
 func processPaths(processName string) (path string) {
